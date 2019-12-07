@@ -1,128 +1,126 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:personalitydevhackathon/ui/addtasks.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  String uid;
+  HomePage({this.uid});
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(),
-    );
-  }
+  _HomePageState createState() => _HomePageState();
 }
 
-TextEditingController fName = new TextEditingController();
-TextEditingController lName = new TextEditingController();
-TextEditingController age = new TextEditingController();
-TextEditingController dob = new TextEditingController();
-TextEditingController height = new TextEditingController();
-TextEditingController weight = new TextEditingController();
+class _HomePageState extends State<HomePage> {
+  Future<DocumentSnapshot> userDetails;
+  String greetingText;
+  @override
+  void initState() {
+    super.initState();
+    userDetails =
+        Firestore.instance.collection("users").document(widget.uid).get();
+    getGreeting();
+  }
 
-class AddUserDetails extends StatelessWidget {
-  AddUserDetails(this.uid);
-
-  final String uid;
-  final _tcBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.all(
-        const Radius.circular(10.0),
-      ),
-      borderSide: BorderSide(color: Colors.transparent));
+  void getGreeting() {
+    DateTime now = DateTime.now();
+    var formatter = new DateFormat('H');
+    var hour = int.parse(formatter.format(now));
+    if (hour < 12)
+      greetingText = "Good Morning,";
+    else if (hour >= 12 && hour <= 15)
+      greetingText = "Good Afternoon,";
+    else if (hour >= 15 && hour <= 18)
+      greetingText = "Good Evening,";
+    else if (hour >= 18 && hour <= 23) greetingText = "Good Night,";
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
-      body: SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.all(10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 40, left: 10),
-                child: Text("Hello, We Want To Know More About You.",
-                    style: TextStyle(
-                      fontFamily: "GothamB",
-                      color: Theme.of(context).primaryColor,
-                      fontSize: 25,
-                    )),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              detailsTextField("First Name", fName),
-              detailsTextField("Last Name", lName),
-              detailsTextField("Age", age),
-              detailsTextField("Date Of Birth (in DD-MM-YYYY)", dob),
-              detailsTextField("Height (in cm)", height),
-              detailsTextField("Weight (in kg)", weight),
-              proceedButton(context)
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Container proceedButton(BuildContext context) {
-    return Container(
-      width: 150,
-      padding: EdgeInsets.all(10),
-      child: MaterialButton(
-        height: 60,
-        minWidth: 90,
-        color: Theme.of(context).primaryColor,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10))),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Text("Proceed",
-                style: TextStyle(fontSize: 15, color: Colors.white)),
-            Icon(Icons.arrow_forward, color: Colors.white)
-          ],
-        ),
-        onPressed: () async {
-          if (lName.text.isNotEmpty &&
-              fName.text.isNotEmpty &&
-              age.text.isNotEmpty &&
-              dob.text.isNotEmpty &&
-              weight.text.isNotEmpty &&
-              height.text.isNotEmpty) {
-            var doc = await Firestore.instance
-                .collection('users')
-                .document(uid)
-                .setData({
-              "fname": fName.text,
-              "lname": lName.text,
-              "age": age.text,
-              "dob": dob.text,
-              "weight": weight.text,
-              "height": height.text,
-            });
-            Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => HomePage()));
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+          body: FutureBuilder(
+        future: userDetails,
+        builder:
+            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
+              print(snapshot.data.data);
+              print(widget.uid);
+              return Container(
+                child: Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(right: 15, top: 50),
+                      child: ListTile(
+                          title: Text(
+                              greetingText + "\n" + snapshot.data.data['fname'],
+                              style: TextStyle(
+                                  fontFamily: "GothamR",
+                                  fontSize: 30,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold)),
+                          trailing: CircleAvatar(
+                              radius: 25,
+                              backgroundImage: AssetImage("images/user.png"))),
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.all(25),
+                      title: Text("Todays Tasks",
+                          style: TextStyle(
+                            fontFamily: "GothamR",
+                            fontSize: 20,
+                            color: Colors.black,
+                          )),
+                      trailing: FloatingActionButton(
+                        mini: true,
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: Icon(Icons.add),
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AddTasks(
+                                        uid: widget.uid,
+                                      )));
+                        },
+                      ),
+                    ),
+                    Container(
+                      // margin: EdgeInsets.symmetric(vertical: 1.0),
+                      height: 260,
+                      child: ListView(
+                        padding: EdgeInsets.only(left: 20, right: 40),
+                        scrollDirection: Axis.horizontal,
+                        children: <Widget>[
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(right: 10, bottom: 20),
+                            child: Card(
+                                color: Theme.of(context).primaryColor,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10))),
+                                elevation: 10.0,
+                                child: SizedBox(
+                                  height: 200,
+                                  width: 160,
+                                  child: Text("da"),
+                                )),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              );
+              break;
+            default:
+              return Center(child: CircularProgressIndicator());
           }
         },
-      ),
-    );
-  }
-
-  Padding detailsTextField(String hintText, TextEditingController tc) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        controller: tc,
-        decoration: InputDecoration(
-            hintText: hintText,
-            border: _tcBorder,
-            filled: true,
-            fillColor: Colors.grey[400],
-            enabledBorder: _tcBorder,
-            disabledBorder: _tcBorder),
-      ),
+      )),
     );
   }
 }

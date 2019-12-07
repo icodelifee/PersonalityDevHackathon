@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:personalitydevhackathon/services/firebase/authentication.dart';
+import 'package:personalitydevhackathon/ui/adduserdetails.dart';
 import 'package:personalitydevhackathon/ui/homepage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -149,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
                     var box = await Hive.openBox('userData');
                     box.put("user", {"userid": userId});
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => HomePage()));
+                        MaterialPageRoute(builder: (context) => HomePage(uid: userId,)));
                   }
                 } else {
                   userId =

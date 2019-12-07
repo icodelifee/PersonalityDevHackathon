@@ -4,17 +4,26 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:personalitydevhackathon/services/firebase/authentication.dart';
+import 'package:personalitydevhackathon/ui/homepage.dart';
 import 'package:personalitydevhackathon/ui/loginpage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+var user;
 void main() async {
-  runApp(MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
   final appDocumentDir = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDir.path);
+  var box = await Hive.openBox('userData');
+  user = box.get("user")["userid"];
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString("tasks", "[]");
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   final Color primaryColor = Color(0xFFEC2637);
   final Color primaryBgColor = Color(0xFFE5E4E5);
+  final Color cardColor = Color(0xFF4D53E0);
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +33,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
           fontFamily: "GothamR",
           primaryColor: primaryColor,
+          cardColor: cardColor,
           backgroundColor: primaryBgColor),
-      home: LoginIntro(),
+      home: user == null
+          ? LoginIntro()
+          : HomePage(
+              uid: user,
+            ),
     );
   }
 }
