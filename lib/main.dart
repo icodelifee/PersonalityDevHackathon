@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:personalitydevhackathon/services/firebase/authentication.dart';
 import 'package:personalitydevhackathon/ui/loginpage.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  runApp(MyApp());
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+}
 
 class MyApp extends StatelessWidget {
   final Color primaryColor = Color(0xFFEC2637);
   final Color primaryBgColor = Color(0xFFE5E4E5);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -75,9 +84,15 @@ class LoginIntro extends StatelessWidget {
                   minWidth: 30,
                   color: Colors.white,
                   child: Icon(Icons.arrow_forward),
-                  onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => LoginPage()));
+                  onPressed: () async {
+                    Map<PermissionGroup, PermissionStatus> permissions =
+                        await PermissionHandler()
+                            .requestPermissions([PermissionGroup.storage]);
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                LoginPage(Auth())));
                   },
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(Radius.circular(10))),
